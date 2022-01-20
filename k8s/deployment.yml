@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  selector:
+    app: mongodb
+  ports:
+  - protocol: TCP
+    port: 27017
+  type: ClusterIP
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deploy
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.4
+        ports: 
+          - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: admin
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: password
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rotten-potatoes-service
+spec:
+  selector:
+    app: rotten-potatoes
+  ports:
+  - protocol: TCP
+    port: 5000
+    nodePort: 30001
+  type: NodePort
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rotten-potatoes-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rotten-potatoes
+  template:
+    metadata:
+      labels:
+        app: rotten-potatoes
+    spec:
+      containers:
+      - name: rotten-potatoes
+        image: sinayra/rotten-potatoes:v1
+        ports: 
+          - containerPort: 5000
+        env:
+          - name: MONGODB_DB
+            value: admin
+          - name: MONGODB_HOST
+            value: mongodb-service
+          - name: MONGODB_PORT
+            value: "27017"
+          - name: MONGODB_USERNAME
+            value: admin
+          - name: MONGODB_PASSWORD
+            value: password
